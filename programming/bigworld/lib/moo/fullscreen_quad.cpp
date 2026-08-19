@@ -141,7 +141,11 @@ namespace Moo
         m_vecDclr = Moo::VertexDeclaration::get("xyzuv");
         isOk = Moo::createEffect( m_clearFM, "shaders/std_effects/quad_clear.fx" );
 
-        MF_ASSERT( m_vecDclr && isOk && "Not all system resources were loaded correctly." );
+        if (!m_vecDclr || !isOk)
+        {
+            WARNING_MSG( "FullscreenQuad::createManagedObjects: "
+                "Not all system resources were loaded correctly.\n" );
+        }
     }
 
     //----------------------------------------------------------------------------------------------

@@ -19,6 +19,7 @@ namespace Moo
             return true;
         }
 
+        ERROR_MSG( "Moo::createEffect: Failed to load effect '%s'\n", name.c_str() );
         mat = NULL;
         return false;
     }

@@ -364,7 +364,9 @@ Reason findInterface( const char * name, int id,
 
 	while (++attempt <= retries)
 	{
-		Reason reason = pm.sendAndRecv( 0, BROADCAST, pHandler );
+		// Use LOCALHOST instead of BROADCAST: in WSL, broadcast does not
+		// work, and all server processes run on the same machine anyway.
+		Reason reason = pm.sendAndRecv( 0, LOCALHOST, pHandler );
 
 		if (reason != REASON_SUCCESS)
 		{

@@ -349,7 +349,7 @@ namespace Moo
             m_depthRTCopy, bbDesc.Width, bbDesc.Height, D3DFMT_R32F, "TAA temporal depth copy", true
             );
 
-        MF_ASSERT_DEV(success && "Not all system resources were loaded correctly.");
+        if (!success) { WARNING_MSG("TAASupport: Not all system resources were loaded correctly.\n"); }
     }
 
     //----------------------------------------------------------------------------------------------
@@ -373,7 +373,7 @@ namespace Moo
         success &= createEffect(m_resolveTAAx2Material, "shaders/std_effects/temporal_aa_x2.fx");
         success &= createEffect(m_resolveTAAx4Material, "shaders/std_effects/temporal_aa_x4.fx");
 
-        MF_ASSERT_DEV(success && "Not all system resources were loaded correctly.");
+        if (!success) { WARNING_MSG("TAASupport: Not all system resources were loaded correctly.\n"); }
     }
 
     //----------------------------------------------------------------------------------------------

@@ -220,10 +220,10 @@ void BWMachined::initNetworkInterfaces()
 	if (!epBroadcast_.good() ||
 		 epBroadcast_.bind( htons( PORT_MACHINED ), BROADCAST ) == -1)
 	{
-		syslog( LOG_CRIT, "Failed to bind socket to '%s'. %s.",
+		syslog( LOG_WARNING, "Failed to bind broadcast socket to '%s'. %s. "
+							"Continuing without broadcast (non-fatal in WSL).",
 							inet_ntoa((struct in_addr &)BROADCAST),
 							strerror(errno) );
-		exit( EXIT_FAILURE );
 	}
 
 	cluster_.ownAddr_ = broadcastAddr_;
@@ -909,7 +909,12 @@ void BWMachined::readPacket( Endpoint & ep, TimeQueue64::TimeStamp & tickTime )
 	}
 
 	// Schedule broadcast packets for later
-	if (pPacket->shouldStaggerReply())
+	// Skip staggering for localhost packets: they are unicast and the
+	// IncomingPacket callback would reply via ep_ (bound to the broadcast
+	// interface), which cannot send to 127.0.0.1 in WSL. Handling locally
+	// preserves the receiving endpoint (e.g. epLocal_) for the reply.
+	if (pPacket->shouldStaggerReply() &&
+		sin.sin_addr.s_addr != LOCALHOST)
 	{
 		callbacks_.add( tickTime + (rand() % maxPacketDelayMillisec_),
 						0, &packetTimeoutHandler_,

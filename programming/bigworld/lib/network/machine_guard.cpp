@@ -477,7 +477,10 @@ Mercury::Reason MachineGuardMessage::sendAndRecv( uint32 srcip, uint32 destaddr,
 	Endpoint ep;
 	ep.socket( SOCK_DGRAM );
 
-	if (!ep.good() || ep.bind( 0, srcip ) != 0)
+	// Bind to INADDR_ANY instead of srcip to allow sending to both
+	// localhost and broadcast in WSL (where binding to a specific
+	// interface and sending to another returns EADDRNOTAVAIL).
+	if (!ep.good() || ep.bind( 0, 0 ) != 0)
 	{
 		return Mercury::REASON_GENERAL_NETWORK;
 	}

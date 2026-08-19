@@ -105,7 +105,7 @@ extern int Math_token;
 extern int ResMgr_token;
 extern int PyScript_token;
 extern int AppScriptTimers_token;
-static int s_moduleTokens BW_UNUSED_ATTRIBUTE =
+static int s_moduleTokens __attribute__((used)) =
 	Math_token | ResMgr_token | PyScript_token;
 extern int force_link_UDO_REF;
 static int s_tokenSet BW_UNUSED_ATTRIBUTE =

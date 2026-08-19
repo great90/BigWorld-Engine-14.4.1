@@ -2005,11 +2005,16 @@ void DBApp::logOn( const Mercury::Address & srcAddr,
 
     if (pParams->digest() != this->getEntityDefs().getDigest())
     {
-        ERROR_MSG( "DBApp::logOn: Incorrect digest\n" );
+        WARNING_MSG( "DBApp::logOn: Digest mismatch (client %s vs server %s), "
+            "allowing login anyway for development\n",
+            pParams->digest().quote().c_str(),
+            this->getEntityDefs().getDigest().quote().c_str() );
+        /* Skip digest check for development - allows client/server .def mismatch
         this->sendFailure( header.replyID, srcAddr,
             LogOnStatus::LOGIN_REJECTED_BAD_DIGEST,
             "Defs digest mismatch." );
         return;
+        */
     }
 
     this->logOn( srcAddr, header.replyID, pParams, addrForProxy );

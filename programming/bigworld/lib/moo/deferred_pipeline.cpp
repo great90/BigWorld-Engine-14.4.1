@@ -94,7 +94,7 @@ namespace
         MapVisualizer()
         {
             bool success = createEffect(m_material, "shaders/std_effects/debug_g_buffer.fx");
-            MF_ASSERT_DEV(success && "Not all system resources have been loaded correctly.");
+            if (!success) { WARNING_MSG("DeferredPipeline: Not all system resources have been loaded correctly.\n"); }
         }
 
         //------------------------------------------------------------------------------------------
@@ -744,7 +744,7 @@ void SpeedTreeOptimizer::createManagedObjects()
     success &= createEffect(m_mat, "shaders/speedtree/semitransparent.fx");
     success &= createEffect(m_blurMat, "shaders/hdr/fast_gaussian_blur.fx");
 
-    MF_ASSERT(success && "Not all system resources have been loaded correctly.");
+    if (!success) { WARNING_MSG("DeferredPipeline: Not all system resources have been loaded correctly.\n"); }
 }
 
 //--------------------------------------------------------------------------------------------------

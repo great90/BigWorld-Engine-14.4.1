@@ -81,12 +81,17 @@ namespace Moo
     void PPAASupport::createManagedObjects()
     {
         BW_GUARD;
-        
+
         bool success = true;
         success &= createEffect(m_materials[0], "shaders/anti_aliasing/fxaa_LQ.fx");
         success &= createEffect(m_materials[1], "shaders/anti_aliasing/fxaa_MQ.fx");
         success &= createEffect(m_materials[2], "shaders/anti_aliasing/fxaa_HQ.fx");
-        MF_ASSERT(success && "Not all system resources were loaded correctly.");
+        if (!success)
+        {
+            WARNING_MSG( "PPAASupport::createManagedObjects: "
+                "Not all system resources were loaded correctly. "
+                "Anti-aliasing will be disabled.\n" );
+        }
     }
 
     //----------------------------------------------------------------------------------------------

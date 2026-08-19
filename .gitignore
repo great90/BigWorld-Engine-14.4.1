@@ -1,0 +1,23 @@
+# Large archives and extracted copies
+/BigWorld_OSE_DOCS-RES-TEST/
+/BigWorld_OSE_DOCS-RES-TESTS/
+/BigWorld_OSE_DOCS-RES-TESTS.zip
+/BigWorld-Engine-14.4.1.zip
+*.rpm
+
+# Build artifacts
+/build_client_vc17_win64/
+
+# Game dir: track only scripts (binary resources live in OSE archive)
+/game/*
+!/game/res/
+/game/res/*
+!/game/res/fantasydemo/
+!/game/res/bigworld/
+/game/res/fantasydemo/*
+!/game/res/fantasydemo/scripts/
+/game/res/bigworld/*
+!/game/res/bigworld/scripts/
+
+# Python bytecode
+*.pyc

@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- development_defaults.xml
+     BigWorld 服务器默认开发配置
+     此文件提供服务器进程启动所需的基本默认值。
+     bw.xml 通过 <parentFile> 引用此文件。 -->
+<root>
+    <!-- 进程个性化标识 -->
+    <personality>egclient4</personality>
+
+    <!-- 内部网络接口（留空表示自动发现） -->
+    <internalInterface></internalInterface>
+
+    <!-- 监控接口（留空表示使用内部接口） -->
+    <monitoringInterface></monitoringInterface>
+
+    <!-- 是否启用开发期断言 -->
+    <hasDevelopmentAssertions>true</hasDevelopmentAssertions>
+
+    <!-- ============ BaseApp 配置 ============ -->
+    <baseApp>
+        <load>5000</load>
+        <archivePeriod>0</archivePeriod>
+        <backupPeriod>60.0</backupPeriod>
+        <idClientTimeout>60.0</idClientTimeout>
+        <maxBaseEntities>0</maxBaseEntities>
+        <maxClientSize>5000</maxClientSize>
+        <shouldStackMessages>false</shouldStackMessages>
+        <secondaryDatabaseThreshold>1024</secondaryDatabaseThreshold>
+    </baseApp>
+
+    <!-- ============ BaseAppMgr 配置 ============ -->
+    <baseAppMgr>
+        <maxBaseApps>0</maxBaseApps>
+        <baseAppTimeout>30.0</baseAppTimeout>
+        <baseAppLoadWeight>1.0</baseAppLoadWeight>
+        <deadBaseAppExpiry>0.0</deadBaseAppExpiry>
+        <maxBaseEntityCategories>0</maxBaseEntityCategories>
+    </baseAppMgr>
+
+    <!-- ============ CellApp 配置 ============ -->
+    <cellApp>
+        <load>5000</load>
+        <ghostDistance>80.0</ghostDistance>
+        <ghostDistance2D>0.0</ghostDistance2D>
+        <aoiUpdateArea>30.0</aoiUpdateArea>
+        <maxAoiEntities>1000</maxAoiEntities>
+        <chunkLoadingThreshold>1024</chunkLoadingThreshold>
+        <maxNumGhostEntities>50000</maxNumGhostEntities>
+        <unloadChunkEntityAge>30</unloadChunkEntityAge>
+    </cellApp>
+
+    <!-- ============ CellAppMgr 配置 ============ -->
+    <cellAppMgr>
+        <maxCellApps>0</maxCellApps>
+        <cellAppTimeout>30.0</cellAppTimeout>
+        <minCellAppLoad>0</minCellAppLoad>
+        <cellAppLoadWeight>1.0</cellAppLoadWeight>
+        <maxStartupCellApps>0</maxStartupCellApps>
+    </cellAppMgr>
+
+    <!-- ============ DBApp 配置 ============ -->
+    <dbApp>
+        <mysql>
+            <host>localhost</host>
+            <port>3306</port>
+            <username>bigworld</username>
+            <password></password>
+            <numConnections>5</numConnections>
+            <useCursor>true</useCursor>
+        </mysql>
+        <maxEntityDBStats>0</maxEntityDBStats>
+    </dbApp>
+
+    <!-- ============ DBAppMgr 配置 ============ -->
+    <dbAppMgr>
+        <dbAppTimeout>30.0</dbAppTimeout>
+    </dbAppMgr>
+
+    <!-- ============ LoginApp 配置 ============ -->
+    <loginApp>
+        <port>0</port>
+        <externalInterface></externalInterface>
+        <maxConcurrentLogins>200</maxConcurrentLogins>
+        <loginRateLimit>20</loginRateLimit>
+    </loginApp>
+
+    <!-- ============ ServiceApp 配置 ============ -->
+    <serviceApp>
+        <load>5000</load>
+    </serviceApp>
+
+    <!-- ============ 计费系统配置 ============ -->
+    <billingSystem>
+        <shouldAcceptUnknownUsers>true</shouldAcceptUnknownUsers>
+        <entityTypeForUnknownUsers>ClientAvatar</entityTypeForUnknownUsers>
+    </billingSystem>
+
+    <!-- ============ bwmachined 配置 ============ -->
+    <bwmachined>
+        <serverBwPort>0</serverBwPort>
+    </bwmachined>
+</root>

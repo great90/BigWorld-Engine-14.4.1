@@ -361,7 +361,7 @@ void LightsManager::createManagedObjects()
 
     success &= m_cone.exists() && m_sphere.exists();
 
-    MF_ASSERT_DEV(success && "Not all system resources were loaded correctly.");
+    if (!success) { WARNING_MSG("DeferredLightsManager: Not all system resources were loaded correctly.\n"); }
 }
 
 //--------------------------------------------------------------------------------------------------

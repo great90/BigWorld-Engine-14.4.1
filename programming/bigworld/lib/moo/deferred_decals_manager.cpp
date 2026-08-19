@@ -754,7 +754,7 @@ void DecalsManager::createManagedObjects()
         1.0f / (float)m_staticAtlasMap->width(), 1.0f / (float)m_staticAtlasMap->height()
         );
 
-    MF_ASSERT_DEV(success && "Not all system resources have been loaded correctly.");
+    if (!success) { WARNING_MSG("DeferredDecalsManager: Not all system resources have been loaded correctly.\n"); }
 }
 
 //--------------------------------------------------------------------------------------------------

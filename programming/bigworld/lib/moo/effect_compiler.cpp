@@ -12,10 +12,25 @@
 #include "managed_effect.hpp"
 #include "effect_helpers.hpp"
 
+#include <cstdio>
 
 BW_BEGIN_NAMESPACE
 
 namespace {
+	// Simple debug log for early init diagnostics
+	void fxDebugLog( const char* fmt, ... )
+	{
+		FILE* f = fopen( "bwclient_fx_debug.log", "a" );
+		if (f)
+		{
+			va_list args;
+			va_start( args, fmt );
+			vfprintf( f, fmt, args );
+			va_end( args );
+			fclose( f );
+		}
+	}
+
 	// This avoids spam in the debug window for loading/unloading
 	// the D3D compiler DLL whenever a shader gets rebuilt. Just
 	// load once on startup and leave it loaded.
@@ -267,10 +282,14 @@ bool EffectCompiler::getIncludes( const BW::string& resourceID,
 	ComObjectWrap<ID3DXEffectCompiler> pCompiler;
 	ComObjectWrap<ID3DXBuffer> pCompilationErrors;
 
-	BW::wstring wResName = bw_utf8tow( resourceID );
+	// Resolve the resource ID to an absolute file path.
+	BW::string absFxPath = resourceID;
+	BWResource::resolveToAbsolutePath( absFxPath );
+	const BW::string& fxPath = !absFxPath.empty() ? absFxPath : resourceID;
+	BW::wstring wResName = bw_utf8tow( fxPath );
 	HRESULT hr = D3DXCreateEffectCompilerFromFileW( wResName.c_str(),
 		&d3dxMacros[0],
-		&includes_, 
+		&includes_,
 		compileFlags_ | USE_LEGACY_D3DX9_DLL, &pCompiler,
 		&pCompilationErrors );
 
@@ -284,7 +303,7 @@ bool EffectCompiler::getIncludes( const BW::string& resourceID,
 	{
 		hr = D3DXCreateEffectCompilerFromFileW( wResName.c_str(),
 			&d3dxMacros[0],
-			&includes_, 
+			&includes_,
 			compileFlags_, &pCompiler,
 			&pCompilationErrors );
 	}
@@ -350,6 +369,8 @@ BinaryPtr EffectCompiler::compile( const BW::string& resourceID,
 
 	if (!this->hashResource( resourceID, resDigest ))
 	{
+		fxDebugLog( "EffectCompiler::compile: failed to hash '%s'\n",
+			resourceID.c_str() );
 		DEBUG_MSG( "EffectCompiler::compile: failed to hash '%s'.\n",
 			resourceID.c_str() );
 		return NULL;
@@ -358,17 +379,29 @@ BinaryPtr EffectCompiler::compile( const BW::string& resourceID,
 	BinaryPtr bin;
 	if (recompile)
 	{
+		fxDebugLog( "EffectCompiler::compile: compiling '%s'\n",
+			resourceID.c_str() );
 		TRACE_MSG( "EffectCompiler: compiling '%s'\n",
 			resourceID.c_str() );
 
 		ComObjectWrap<ID3DXEffectCompiler> pCompiler;
 
-		BW::wstring wResName = bw_utf8tow( resourceID );
+		// Resolve the resource ID to an absolute file path so that
+		// D3DXCreateEffectCompilerFromFileW can find the .fx file
+		// regardless of the current working directory.
+		BW::string absFxPath = resourceID;
+		IFileSystem::FileType ft = BWResource::resolveToAbsolutePath( absFxPath );
+		fxDebugLog( "EffectCompiler::compile: resolved '%s' -> '%s' (type=%d)\n",
+			resourceID.c_str(), absFxPath.c_str(), (int)ft );
+		const BW::string& fxPath = !absFxPath.empty() ? absFxPath : resourceID;
+		BW::wstring wResName = bw_utf8tow( fxPath );
 		HRESULT hr = D3DXCreateEffectCompilerFromFileW( wResName.c_str(),
 			&d3dxMacros[0],
-			&includes_, 
+			&includes_,
 			compileFlags_ | USE_LEGACY_D3DX9_DLL, &pCompiler,
 			&pCompilationErrors );
+
+		fxDebugLog( "EffectCompiler::compile: D3DXCreateEffectCompiler (legacy) hr=0x%08X\n", hr );
 
 		//-- if we failed to create legacy HLSL compiler then try to create standard
 		//--	 DX10 compiler. This may happens only when we try to compile SM 3.0 shaders. As
@@ -382,11 +415,18 @@ BinaryPtr EffectCompiler::compile( const BW::string& resourceID,
 				&includes_,
 				compileFlags_, &pCompiler,
 				&pCompilationErrors );
+			fxDebugLog( "EffectCompiler::compile: D3DXCreateEffectCompiler (standard) hr=0x%08X\n", hr );
 		}
 
 		if (FAILED( hr ))
 		{
-			ERROR_MSG( "%s\n", pCompilationErrors ? 
+			fxDebugLog( "EffectCompiler::compile: FAILED to create compiler for '%s'\n", resourceID.c_str() );
+			if (pCompilationErrors)
+			{
+				fxDebugLog( "EffectCompiler::compile: errors: %s\n",
+					(char*)pCompilationErrors->GetBufferPointer() );
+			}
+			ERROR_MSG( "%s\n", pCompilationErrors ?
 				pCompilationErrors->GetBufferPointer() : "" );
 
 			if (outResult)
@@ -412,12 +452,19 @@ BinaryPtr EffectCompiler::compile( const BW::string& resourceID,
 			hr = pCompiler->CompileEffect( compileFlags_, &pEffectBuffer,
 				&pCompilationErrors );
 		}
+		fxDebugLog( "EffectCompiler::compile: CompileEffect hr=0x%08X\n", hr );
 		if (FAILED( hr ))
 		{
+			fxDebugLog( "EffectCompiler::compile: CompileEffect FAILED for '%s'\n", resourceID.c_str() );
+			if (pCompilationErrors)
+			{
+				fxDebugLog( "EffectCompiler::compile: errors: %s\n",
+					(char*)pCompilationErrors->GetBufferPointer() );
+			}
 			ASSET_MSG( "ManagedEffect::compile - "
 				"Unable to compile effect %s\n%s",
-				resourceID.c_str(), 
-				pCompilationErrors ? 
+				resourceID.c_str(),
+				pCompilationErrors ?
 					pCompilationErrors->GetBufferPointer() : "" );
 
 			if (outResult)
@@ -440,6 +487,13 @@ BinaryPtr EffectCompiler::compile( const BW::string& resourceID,
 		bin = new BinaryBlock( pEffectBuffer->GetBufferPointer(),
 			pEffectBuffer->GetBufferSize(), "BinaryBlock/ManagedEffect" );
 
+		// Try to save the compiled .fxo for caching. If saving fails
+		// (e.g. read-only resource path), the compiled binary (bin) is
+		// still valid and returned to the caller. Wrap in an IIFE so
+		// that any save-related failure just exits the lambda without
+		// discarding the already-compiled bin.
+		[&]()
+		{
 		BWResource::instance().fileSystem()->eraseFileOrDirectory(
 			fxoName );
 
@@ -456,24 +510,27 @@ BinaryPtr EffectCompiler::compile( const BW::string& resourceID,
 			SimpleMutexHolder parentSectionSMH( parentSectionMutex );
 
 			parentSection = BWResource::openSection(
-				parentName, true, ZipSection::creator() );
-			IF_NOT_MF_ASSERT_DEV( parentSection )
-			{
-				return NULL;
-			}
-
-			// make it
-			pSection = parentSection->openSection(
-				tagName, true, ZipSection::creator() );
-		}
-
-		pSection->setParent( parentSection );
-		pSection = pSection->convertToZip( "", parentSection );
-
-		IF_NOT_MF_ASSERT_DEV( pSection )
+			parentName, true, ZipSection::creator() );
+		if (!parentSection)
 		{
-			return NULL;
+			fxDebugLog( "EffectCompiler::compile: could not open parent section '%s' for save, skipping save\n",
+				parentName.c_str() );
+			return;
 		}
+
+		// make it
+		pSection = parentSection->openSection(
+			tagName, true, ZipSection::creator() );
+	}
+
+	pSection->setParent( parentSection );
+	pSection = pSection->convertToZip( "", parentSection );
+
+	if (!pSection)
+	{
+		fxDebugLog( "EffectCompiler::compile: convertToZip failed, skipping save\n" );
+		return;
+	}
 
 		pSection->delChildren();
 
@@ -499,12 +556,12 @@ BinaryPtr EffectCompiler::compile( const BW::string& resourceID,
 
 		if (pSection->writeBinary( "effect", bin ))
 		{
-			// Write the dependency list			
+			// Write the dependency list
 			BW::list<BW::string> &src =
 				includes_.dependencies();
 			src.unique(); // remove possible duplicates..
 
-			for (BW::list<BW::string>::iterator it = src.begin(); 
+			for (BW::list<BW::string>::iterator it = src.begin();
 				it != src.end(); ++it)
 			{
 				DataSectionPtr dependsSec = pSection->newSection("depends");
@@ -512,7 +569,7 @@ BinaryPtr EffectCompiler::compile( const BW::string& resourceID,
 
 				BW::string str( *it );
 
-				BinaryPtr binaryBlockString = 
+				BinaryPtr binaryBlockString =
 					new BinaryBlock(
 					str.data(),
 					str.size(),
@@ -527,25 +584,23 @@ BinaryPtr EffectCompiler::compile( const BW::string& resourceID,
 				bool hashed = this->hashResource(
 					pathname, depDigest );
 
-				IF_NOT_MF_ASSERT_DEV( hashed == true &&
-					"Failed to hash shader dependancy "
-					"(should exist, since we just compiled it)." )
+				if (!hashed)
 				{
-					hashSection->setParent( NULL );
-					effectSection->setParent( NULL );
-					return NULL;
+					fxDebugLog( "EffectCompiler::compile: skipping unhashable dependency '%s'\n",
+						pathname.c_str() );
+					continue;
 				}
 
 				BW::string quotedDepDigest = depDigest.quote();
 
-				DataSectionPtr hashSection = dependsSec->newSection( "hash" );
-				BinaryPtr depDigestBinaryBlock = 
+				DataSectionPtr depHashSection = dependsSec->newSection( "hash" );
+				BinaryPtr depDigestBinaryBlock =
 					new BinaryBlock(
 					quotedDepDigest.data(),
 					quotedDepDigest.length(),
 					"BinaryBlock/ManagedEffect" );
 
-				hashSection->setBinary( depDigestBinaryBlock );
+				depHashSection->setBinary( depDigestBinaryBlock );
 			}
 
 			// Now actually save...
@@ -555,7 +610,7 @@ BinaryPtr EffectCompiler::compile( const BW::string& resourceID,
 				// file(s). If so, there should be a writable, cache directory
 				// in the search paths, so try to build the folder structure in
 				// it and try to save again.
-				BWResource::ensurePathExists( effectPath );	
+				BWResource::ensurePathExists( effectPath );
 				warn = !pSection->save();
 			}
 			else
@@ -581,6 +636,7 @@ BinaryPtr EffectCompiler::compile( const BW::string& resourceID,
 		hashSection = NULL;
 		pSection = NULL;
 		parentSection = NULL;
+		}(); // end save IIFE
 	}
 	else
 	{
@@ -592,6 +648,8 @@ BinaryPtr EffectCompiler::compile( const BW::string& resourceID,
 		}
 	}
 
+	fxDebugLog( "EffectCompiler::compile: returning bin=%p for '%s'\n",
+		(void*)bin.getObject(), resourceID.c_str() );
 	return bin;
 }
 

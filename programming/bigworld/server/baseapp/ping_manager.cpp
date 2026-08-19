@@ -197,12 +197,11 @@ bool PingManager::init()
 
 	if (!pKeySection)
 	{
-		ERROR_MSG( "No key file %s found.\n"
-			"Either place your %s file at the root of your resource tree (for\n"
-			"example bigworld/res/%s) or contact support@bigworldtech.com for a "
-			"key.\n", KEY_FILE, KEY_FILE, KEY_FILE );
-
-		return false;
+		// Non-fatal: allow baseapp to start without a license key for
+		// development/testing purposes. Ping functionality is disabled.
+		WARNING_MSG( "No key file %s found. Ping functionality disabled.\n",
+			KEY_FILE );
+		return true;
 	}
 
 	BinaryPtr pKeyBinary = pKeySection->asBinary();

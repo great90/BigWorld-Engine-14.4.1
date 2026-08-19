@@ -8,17 +8,24 @@ IF( MSVC )
 		# Preprocessor definitions
 		/DWIN32
 		/D_WINDOWS
+		/D_WINSOCK_DEPRECATED_NO_WARNINGS
+		/D_CRT_SECURE_NO_WARNINGS
+		/D_WINSOCKAPI_DEPRECATED_NO_WARNINGS
 
 		# General
 		/W3		# Warning level 3
 		/Zi		# Always generate debug information
 		/MP		# Enable parallel builds
 		/WX		# Enable warnings as errors
-		
+
 		# Code generation
-		/Gy		# Enable function level linking	
-		
+		/Gy		# Enable function level linking
+
 		/w34302 # Enable warning 'conversion': truncation from 'type1' to 'type2'
+		/wd4858 # Disable warning C4858 (discard return value of std::remove)
+		/wd4996 # Disable warning C4996 (deprecated API)
+		/wd4819 # Disable warning C4819 (file contains characters not representable in code page)
+		/wd4477 # Disable warning C4477 (format string mismatch)
 		/d2Zi+	# Put local variables and inline functions into the PDB
 		)
 

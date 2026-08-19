@@ -116,8 +116,8 @@ extern int PyScript_token;
 extern int PyChunk_token;
 extern int PyPhysics2_token;
 extern int PyURLRequest_token;
-static int s_moduleTokens =
-	Math_token | ResMgr_token | PyScript_token | 
+static int s_moduleTokens __attribute__((used)) =
+	Math_token | ResMgr_token | PyScript_token |
 	PyChunk_token | PyPhysics2_token | PyURLRequest_token;
 
 extern int PyUserDataObject_token;
